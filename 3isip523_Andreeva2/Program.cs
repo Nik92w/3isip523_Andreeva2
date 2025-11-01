@@ -1,358 +1,615 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace _3ИСИП523_Андреева1
 {
-    public static class TextOperations
+    public abstract class Person
     {
-        // проверка, на гласную букву
-        public static bool IsVowel(char c)
-        {
-            char[] vowels = { 'а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я',
-                            'a', 'e', 'i', 'o', 'u', 'y' };
-            char lowerC = char.ToLower(c);
+        // ИНКАПСУЛЯЦИЯ: Поля защищены от прямого доступа
+        private string _name;
+        private int _age;
+        private string _contactInfo;
+        private static int _nextId = 1;
+        private int _id;
 
-            for (int i = 0; i < vowels.Length; i++)
+        // контрол доступ
+        public int Id
+        {
+            get => _id;
+            private set => _id = value;
+        }
+        public string Name
+        {
+            get => _name;
+            set
             {
-                if (vowels[i] == lowerC)
-                    return true;
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Имя не может быть пустым");
+                _name = value;
             }
-            return false;
+        }
+        public int Age
+        {
+            get => _age;
+            set
+            {
+                if (value < 16 || value > 100)
+                    throw new ArgumentException("Возраст должен быть от 16 до 100 лет");
+                _age = value;
+            }
+        }
+        public string ContactInfo
+        {
+            get => _contactInfo;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Контактная информация не может быть пустой");
+                _contactInfo = value;
+            }
+        }
+        // Конструктор абстрактного класса
+        protected Person(string name, int age, string contactInfo)
+        {
+            Id = _nextId++;
+            Name = name;
+            Age = age;
+            ContactInfo = contactInfo;
         }
 
-        // проверка, на согласную букву 
-        public static bool IsConsonant(char c)
+        // ПОЛИМОРФИЗМ: Абстрактный метод - каждая производный класс реализует его по-своему
+        public abstract string GetRole();
+        // ПОЛИМОРФИЗМ: Виртуальный метод - можно переопределить в производных классах
+        public virtual string GetInfo()
         {
-            char[] consonants = { 'б', 'в', 'г', 'д', 'ж', 'з', 'й', 'к', 'л', 'м',
-                                'н', 'п', 'р', 'с', 'т', 'ф', 'х', 'ц', 'ч', 'ш', 'щ',
-                                'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm',
-                                'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z' };
-            char lowerC = char.ToLower(c);
-
-            for (int i = 0; i < consonants.Length; i++)
-            {
-                if (consonants[i] == lowerC)
-                    return true;
-            }
-            return false;
-        }
-
-        // проверка, является ли символ буквой
-        public static bool IsLetter(char c)
-        {
-            return (c >= 'а' && c <= 'я') || (c >= 'А' && c <= 'Я') ||
-                   (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                   c == 'ё' || c == 'Ё';
+            return $"{Name}, {Age} лет, {GetRole()}";
         }
     }
-
-    // хранение статистики по тексту
-    public class TextStatistics
+    public class Student : Person  // НАСЛЕДОВАНИЕ
     {
-        public int TextNumber { get; set; }
-        public string Preview { get; set; } // Первые 50 символов текста для идентификации
-        public int WordCount { get; set; }
-        public string ShortestWord { get; set; }
-        public string LongestWord { get; set; }
-        public int SentenceCount { get; set; }
-        public int VowelCount { get; set; }
-        public int ConsonantCount { get; set; }
-        public Dictionary<char, int> LetterFrequency { get; set; }
-
-        public TextStatistics()
+        // ИНКАПСУЛЯЦИЯ: Список курсов защищен от прямого изменения
+        private List<Course> _courses;
+        public IReadOnlyList<Course> Courses => _courses.AsReadOnly();
+        public string Major { get; set; }
+        public int Year { get; set; }
+        public Student(string name, int age, string contactInfo, string major, int year)
+            : base(name, age, contactInfo) // Вызов конструктора базового класса
         {
-            LetterFrequency = new Dictionary<char, int>();
+            Major = major;
+            Year = year;
+            _courses = new List<Course>();
         }
-
-        public void DisplayStatistics()
+        // ПОЛИМОРФИЗМ: Реализация абстрактного метода
+        public override string GetRole()
         {
-            Console.WriteLine($"\n=== СТАТИСТИКА ТЕКСТА #{TextNumber} ===");
-            Console.WriteLine($"Предпросмотр: {Preview}...");
-            Console.WriteLine($"Количество слов: {WordCount}");
-            Console.WriteLine($"Количество предложений: {SentenceCount}");
-            Console.WriteLine($"Самое короткое слово: '{ShortestWord}'");
-            Console.WriteLine($"Самое длинное слово: '{LongestWord}'");
-            Console.WriteLine($"Гласные буквы: {VowelCount}");
-            Console.WriteLine($"Согласные буквы: {ConsonantCount}");
+            return "Студент";
+        }
+        // ПОЛИМОРФИЗМ: Переопределение виртуального метода
+        public override string GetInfo()
+        {
+            return $"{base.GetInfo()}, Специальность: {Major}, {Year} курс";
+        }
+        // Методы для работы с курсами
+        public void EnrollInCourse(Course course)
+        {
+            if (course == null)
+                throw new ArgumentNullException(nameof(course));
 
-            Console.WriteLine("Частота букв:");
-            foreach (var pair in LetterFrequency)
+            if (!_courses.Contains(course))
             {
-                Console.WriteLine($"  {pair.Key}: {pair.Value}");
+                _courses.Add(course);
+                course.AddStudent(this);
             }
         }
-    }
+        public void DropCourse(Course course)
+        {
+            if (_courses.Contains(course))
+            {
+                _courses.Remove(course);
+                course.RemoveStudent(this);
+            }
+        }
+        public string GetCourseList()
+        {
+            if (_courses.Count == 0)
+                return "Не записан на курсы";
 
-    // Основной класс приложения
+            string result = "Курсы: ";
+            foreach (var course in _courses)
+            {
+                result += $"{course.CourseName}, ";
+            }
+            return result.TrimEnd(',', ' ');
+        }
+    }
+    public class Professor : Person
+    {
+        public string Department { get; set; }
+        public string Specialization { get; set; }
+        public decimal Salary { get; set; }
+
+        // ИНКАПСУЛЯЦИЯ: Список курсов защищен
+        private List<Course> _coursesTeaching;
+        public IReadOnlyList<Course> CoursesTeaching => _coursesTeaching.AsReadOnly();
+        public Professor(string name, int age, string contactInfo, string department, string specialization, decimal salary)
+            : base(name, age, contactInfo)
+        {
+            Department = department;
+            Specialization = specialization;
+            Salary = salary;
+            _coursesTeaching = new List<Course>();
+        }
+        // ПОЛИМОРФИЗМ: Реализация абстрактного метода
+        public override string GetRole()
+        {
+            return "Преподаватель";
+        }
+        // ПОЛИМОРФИЗМ: Переопределение виртуального метода
+        public override string GetInfo()
+        {
+            return $"{base.GetInfo()}, Кафедра: {Department}, Специализация: {Specialization}";
+        }
+        public void AssignToCourse(Course course)
+        {
+            if (course == null)
+                throw new ArgumentNullException(nameof(course));
+
+            if (!_coursesTeaching.Contains(course))
+            {
+                _coursesTeaching.Add(course);
+                course.AssignProfessor(this);
+            }
+        }
+        public string GetTeachingCourses()
+        {
+            if (_coursesTeaching.Count == 0)
+                return "Не преподает курсы";
+
+            string result = "Преподаваемые курсы: ";
+            foreach (var course in _coursesTeaching)
+            {
+                result += $"{course.CourseName}, ";
+            }
+            return result.TrimEnd(',', ' ');
+        }
+    }
+    public class Course
+    {
+        private static int _nextCourseId = 1;
+
+        // ИНКАПСУЛЯЦИЯ: Все поля защищены
+        private string _courseName;
+        private string _courseCode;
+        private int _credits;
+        private Professor _professor;
+        private List<Student> _enrolledStudents;
+        public int CourseId { get; private set; }
+        public string CourseName
+        {
+            get => _courseName;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Название курса не может быть пустым");
+                _courseName = value;
+            }
+        }
+        public string CourseCode
+        {
+            get => _courseCode;
+            set
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                    throw new ArgumentException("Код курса не может быть пустым");
+                _courseCode = value;
+            }
+        }
+        public int Credits
+        {
+            get => _credits;
+            set
+            {
+                if (value < 1 || value > 10)
+                    throw new ArgumentException("Кредиты должны быть от 1 до 10");
+                _credits = value;
+            }
+        }
+        public Professor Professor => _professor;
+        public IReadOnlyList<Student> EnrolledStudents => _enrolledStudents.AsReadOnly();
+        public Course(string courseName, string courseCode, int credits)
+        {
+            CourseId = _nextCourseId++;
+            CourseName = courseName;
+            CourseCode = courseCode;
+            Credits = credits;
+            _enrolledStudents = new List<Student>();
+        }
+        public void AssignProfessor(Professor professor)
+        {
+            _professor = professor;
+        }
+        public void AddStudent(Student student)
+        {
+            if (student == null)
+                throw new ArgumentNullException(nameof(student));
+
+            if (!_enrolledStudents.Contains(student))
+            {
+                _enrolledStudents.Add(student);
+            }
+        }
+        public void RemoveStudent(Student student)
+        {
+            if (_enrolledStudents.Contains(student))
+            {
+                _enrolledStudents.Remove(student);
+            }
+        }
+
+        public string GetCourseInfo()
+        {
+            string professorInfo = _professor != null ? _professor.Name : "Не назначен";
+            return $"Курс: {CourseName} ({CourseCode}), Преподаватель: {professorInfo}, " +
+                   $"Кредиты: {Credits}, Студентов: {_enrolledStudents.Count}";
+        }
+
+        public string GetStudentList()
+        {
+            if (_enrolledStudents.Count == 0)
+                return "На курс не записаны студенты";
+
+            string result = "Студенты курса:\n";
+            foreach (var student in _enrolledStudents)
+            {
+                result += $"- {student.Name} ({student.Major})\n";
+            }
+            return result;
+        }
+    }
+    public class University
+    {
+        // ИНКАПСУЛЯЦИЯ: Все коллекции защищены от прямого доступа
+        private List<Person> _people;
+        private List<Course> _courses;
+
+        public University()
+        {
+            _people = new List<Person>();
+            _courses = new List<Course>();
+            InitializeSampleData();
+        }
+
+        // Методы для работы со студентами
+        public void AddStudent(string name, int age, string contactInfo, string major, int year)
+        {
+            var student = new Student(name, age, contactInfo, major, year);
+            _people.Add(student);
+        }
+
+        // Методы для работы с преподавателями
+        public void AddProfessor(string name, int age, string contactInfo, string department, string specialization, decimal salary)
+        {
+            var professor = new Professor(name, age, contactInfo, department, specialization, salary);
+            _people.Add(professor);
+        }
+
+        // Методы для работы с курсами
+        public void AddCourse(string courseName, string courseCode, int credits)
+        {
+            var course = new Course(courseName, courseCode, credits);
+            _courses.Add(course);
+        }
+
+        // ПОЛИМОРФИЗМ: Работаем с разными типами через базовый класс Person
+        public List<Student> GetAllStudents()
+        {
+            return _people.OfType<Student>().ToList();
+        }
+
+        public List<Professor> GetAllProfessors()
+        {
+            return _people.OfType<Professor>().ToList();
+        }
+
+        public List<Course> GetAllCourses()
+        {
+            return new List<Course>(_courses);
+        }
+
+        public Student FindStudentById(int id)
+        {
+            return _people.OfType<Student>().FirstOrDefault(s => s.Id == id);
+        }
+
+        public Professor FindProfessorById(int id)
+        {
+            return _people.OfType<Professor>().FirstOrDefault(p => p.Id == id);
+        }
+
+        public Course FindCourseById(int id)
+        {
+            return _courses.FirstOrDefault(c => c.CourseId == id);
+        }
+
+        public void EnrollStudentInCourse(int studentId, int courseId)
+        {
+            var student = FindStudentById(studentId);
+            var course = FindCourseById(courseId);
+
+            if (student != null && course != null)
+            {
+                student.EnrollInCourse(course);
+            }
+        }
+
+        public void AssignProfessorToCourse(int professorId, int courseId)
+        {
+            var professor = FindProfessorById(professorId);
+            var course = FindCourseById(courseId);
+
+            if (professor != null && course != null)
+            {
+                professor.AssignToCourse(course);
+            }
+        }
+
+        // Инициализация тестовыми данными
+        private void InitializeSampleData()
+        {
+            // Добавляем преподавателей
+            AddProfessor("Иван Петров", 45, "ivan@university.ru", "Компьютерные науки", "Программирование", 80000);
+            AddProfessor("Мария Сидорова", 38, "maria@university.ru", "Математика", "Алгебра", 75000);
+            AddProfessor("Алексей Козлов", 50, "alex@university.ru", "Физика", "Квантовая механика", 90000);
+
+            // Добавляем студентов
+            AddStudent("Анна Иванова", 20, "anna@student.ru", "Компьютерные науки", 2);
+            AddStudent("Дмитрий Смирнов", 21, "dmitry@student.ru", "Математика", 3);
+            AddStudent("Елена Кузнецова", 19, "elena@student.ru", "Физика", 1);
+            AddStudent("Сергей Попов", 22, "sergey@student.ru", "Компьютерные науки", 4);
+            AddStudent("Ольга Васильева", 20, "olga@student.ru", "Математика", 2);
+
+            // Добавляем курсы
+            AddCourse("Программирование на C#", "CS101", 5);
+            AddCourse("Алгебра и геометрия", "MATH201", 6);
+            AddCourse("Квантовая физика", "PHYS301", 7);
+            AddCourse("Базы данных", "CS202", 4);
+            AddCourse("Математический анализ", "MATH102", 6);
+
+            // Назначаем преподавателей на курсы
+            AssignProfessorToCourse(1, 1); // Иван Петров на Программирование
+            AssignProfessorToCourse(2, 2); // Мария Сидорова на Алгебру
+            AssignProfessorToCourse(3, 3); // Алексей Козлов на Квантовую физику
+            AssignProfessorToCourse(1, 4); // Иван Петров на Базы данных
+            AssignProfessorToCourse(2, 5); // Мария Сидорова на Матанализ
+
+            // Записываем студентов на курсы
+            EnrollStudentInCourse(1, 1); // Анна на Программирование
+            EnrollStudentInCourse(1, 4); // Анна на Базы данных
+            EnrollStudentInCourse(2, 2); // Дмитрий на Алгебру
+            EnrollStudentInCourse(2, 5); // Дмитрий на Матанализ
+            EnrollStudentInCourse(3, 3); // Елена на Квантовую физику
+            EnrollStudentInCourse(4, 1); // Сергей на Программирование
+            EnrollStudentInCourse(5, 2); // Ольга на Алгебру
+        }
+    }
     class Program
     {
-        private static List<TextStatistics> allStatistics = new List<TextStatistics>();
-        private static int textCounter = 0;
+        private static University _university = new University();
 
         static void Main(string[] args)
         {
-            Console.OutputEncoding = Encoding.UTF8;
-            Console.InputEncoding = Encoding.UTF8;
+            Console.WriteLine("=== СИСТЕМА УПРАВЛЕНИЯ УНИВЕРСИТЕТОМ ===");
 
-            Console.WriteLine("=== АНАЛИЗАТОР ТЕКСТА ===");
-
-            bool exit = false;
-            while (!exit)
+            bool running = true;
+            while (running)
             {
-                DisplayMenu();
+                DisplayMainMenu();
                 string choice = Console.ReadLine();
 
                 switch (choice)
                 {
                     case "1":
-                        AnalyzeNewText();
+                        ManageStudents();
                         break;
                     case "2":
-                        ShowAllStatistics();
+                        ManageProfessors();
+                        break;
+                    case "3":
+                        ManageCourses();
+                        break;
+                    case "4":
+                        DisplayAllInformation();
                         break;
                     case "0":
-                        exit = true;
+                        running = false;
+                        Console.WriteLine("Выход из системы...");
                         break;
                     default:
                         Console.WriteLine("Неверный выбор. Попробуйте снова.");
                         break;
                 }
 
-                if (!exit)
-                {
-                    Console.WriteLine("\nНажмите любую клавишу для продолжения...");
-                    Console.ReadKey();
-                    Console.Clear();
-                }
+                Console.WriteLine();
             }
-
-            Console.WriteLine($"Всего проанализировано текстов: {textCounter}");
         }
 
-        static void DisplayMenu()
+        static void DisplayMainMenu()
         {
-            Console.WriteLine("\n=== ГЛАВНОЕ МЕНЮ ===");
-            Console.WriteLine($"Проанализировано текстов: {textCounter}");
-            Console.WriteLine("1. Анализ нового текста");
-            Console.WriteLine("2. Показать статистику по всем текстам");
-            Console.WriteLine("0. Выход");
-            Console.Write("Выберите действие: ");
+            Console.WriteLine("\nГлавное меню:");
+            Console.WriteLine("1 - Управление студентами");
+            Console.WriteLine("2 - Управление преподавателями");
+            Console.WriteLine("3 - Управление курсами");
+            Console.WriteLine("4 - Просмотр всей информации");
+            Console.WriteLine("0 - Выход");
+            Console.Write("Ваш выбор: ");
         }
 
-        static void AnalyzeNewText()
+        static void ManageStudents()
         {
-            Console.WriteLine("\n=== АНАЛИЗ НОВОГО ТЕКСТА ===");
-
-            string text;
-            while (true)
+            bool inStudentMenu = true;
+            while (inStudentMenu)
             {
-                Console.WriteLine("Введите текст (минимум 100 символов):");
-                text = Console.ReadLine();
+                Console.WriteLine("\n--- Управление студентами ---");
+                Console.WriteLine("1 - Добавить студента");
+                Console.WriteLine("2 - Просмотреть всех студентов");
+                Console.WriteLine("3 - Найти студента по ID");
+                Console.WriteLine("4 - Записать студента на курс");
+                Console.WriteLine("5 - Вернуться в главное меню");
+                Console.Write("Ваш выбор: ");
 
-                if (text.Length >= 100)
+                string choice = Console.ReadLine();
+                switch (choice)
                 {
-                    break;
-                }
-                else
-                {
-                    Console.WriteLine($"Ошибка: текст содержит только {text.Length} символов. Нужно минимум 100!");
-                }
-            }
-
-            TextStatistics stats = AnalyzeText(text);
-            allStatistics.Add(stats);
-
-            Console.WriteLine("\nАнализ завершен!");
-            stats.DisplayStatistics();
-        }
-
-        static TextStatistics AnalyzeText(string text)
-        {
-            textCounter++;
-            TextStatistics stats = new TextStatistics
-            {
-                TextNumber = textCounter,
-                Preview = text.Length > 50 ? text.Substring(0, 50) : text
-            };
-
-            // Подсчет слов и поиск самого короткого/длинного слова
-            string[] words = SplitIntoWords(text);
-            stats.WordCount = words.Length;
-
-            if (words.Length > 0)
-            {
-                stats.ShortestWord = words[0];
-                stats.LongestWord = words[0];
-
-                for (int i = 0; i < words.Length; i++)
-                {
-                    if (words[i].Length < stats.ShortestWord.Length)
-                        stats.ShortestWord = words[i];
-
-                    if (words[i].Length > stats.LongestWord.Length)
-                        stats.LongestWord = words[i];
-                }
-            }
-
-            // Подсчет предложений
-            stats.SentenceCount = CountSentences(text);
-
-            // Подсчет гласных, согласных и частоты букв
-            for (int i = 0; i < text.Length; i++)
-            {
-                char c = text[i];
-
-                if (TextOperations.IsVowel(c))
-                    stats.VowelCount++;
-                else if (TextOperations.IsConsonant(c))
-                    stats.ConsonantCount++;
-
-                // Статистика по частоте букв
-                if (TextOperations.IsLetter(c))
-                {
-                    char lowerC = char.ToLower(c);
-                    if (stats.LetterFrequency.ContainsKey(lowerC))
-                    {
-                        stats.LetterFrequency[lowerC]++;
-                    }
-                    else
-                    {
-                        stats.LetterFrequency[lowerC] = 1;
-                    }
-                }
-            }
-
-            return stats;
-        }
-
-        // Метод для разделения текста на слова 
-        static string[] SplitIntoWords(string text)
-        {
-            List<string> words = new List<string>();
-            StringBuilder currentWord = new StringBuilder();
-            char[] separators = { ' ', ',', '.', '!', '?', ';', ':', '(', ')', '[', ']', '{', '}',
-                                '\t', '\n', '\r', '\"', '\'' };
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                char c = text[i];
-                bool isSeparator = false;
-
-                // Проверяем, является ли символ разделителем
-                for (int j = 0; j < separators.Length; j++)
-                {
-                    if (separators[j] == c)
-                    {
-                        isSeparator = true;
+                    case "1":
+                        AddNewStudent();
                         break;
-                    }
-                }
-
-                if (isSeparator)
-                {
-                    if (currentWord.Length > 0)
-                    {
-                        words.Add(currentWord.ToString());
-                        currentWord.Clear();
-                    }
-                }
-                else
-                {
-                    currentWord.Append(c);
+                    case "2":
+                        DisplayAllStudents();
+                        break;
+                    case "3":
+                        FindStudent();
+                        break;
+                    case "4":
+                        EnrollStudent();
+                        break;
+                    case "5":
+                        inStudentMenu = false;
+                        break;
+                    default:
+                        Console.WriteLine("Неверный выбор.");
+                        break;
                 }
             }
-
-            // Добавляем последнее слово, если оно есть
-            if (currentWord.Length > 0)
-            {
-                words.Add(currentWord.ToString());
-            }
-
-            return words.ToArray();
         }
 
-        // Метод для подсчета предложений
-        static int CountSentences(string text)
+        static void AddNewStudent()
         {
-            int count = 0;
-            bool inSentence = false;
-
-            for (int i = 0; i < text.Length; i++)
+            try
             {
-                char c = text[i];
+                Console.Write("Введите имя: ");
+                string name = Console.ReadLine();
 
-                if (char.IsLetter(c) || char.IsDigit(c))
-                {
-                    if (!inSentence)
-                    {
-                        inSentence = true;
-                    }
-                }
-                else if (c == '.' || c == '!' || c == '?' || c == '…')
-                {
-                    if (inSentence)
-                    {
-                        count++;
-                        inSentence = false;
-                    }
-                }
+                Console.Write("Введите возраст: ");
+                int age = int.Parse(Console.ReadLine());
+
+                Console.Write("Введите контактную информацию: ");
+                string contact = Console.ReadLine();
+
+                Console.Write("Введите специальность: ");
+                string major = Console.ReadLine();
+
+                Console.Write("Введите курс: ");
+                int year = int.Parse(Console.ReadLine());
+
+                _university.AddStudent(name, age, contact, major, year);
+                Console.WriteLine("Студент успешно добавлен!");
             }
-
-            // Если текст заканчивается без знака препинания
-            if (inSentence)
+            catch (Exception ex)
             {
-                count++;
+                Console.WriteLine($"Ошибка: {ex.Message}");
             }
-
-            return count;
         }
 
-        static void ShowAllStatistics()
+        static void DisplayAllStudents()
         {
-            Console.WriteLine("\n=== СТАТИСТИКА ПО ВСЕМ ТЕКСТАМ ===");
-
-            if (allStatistics.Count == 0)
+            var students = _university.GetAllStudents();
+            if (students.Count == 0)
             {
-                Console.WriteLine("Статистика отсутствует. Сначала проанализируйте тексты.");
+                Console.WriteLine("Студенты не найдены.");
                 return;
             }
 
-            // Общая статистика
-            Console.WriteLine($"Всего проанализировано текстов: {allStatistics.Count}");
-
-            int totalWords = 0;
-            int totalSentences = 0;
-            int totalVowels = 0;
-            int totalConsonants = 0;
-
-            for (int i = 0; i < allStatistics.Count; i++)
+            Console.WriteLine("\n--- Все студенты ---");
+            foreach (var student in students)
             {
-                totalWords += allStatistics[i].WordCount;
-                totalSentences += allStatistics[i].SentenceCount;
-                totalVowels += allStatistics[i].VowelCount;
-                totalConsonants += allStatistics[i].ConsonantCount;
+                // ПОЛИМОРФИЗМ: Вызывается переопределенный метод GetInfo()
+                Console.WriteLine($"ID: {student.Id}, {student.GetInfo()}");
+                Console.WriteLine($"  {student.GetCourseList()}");
+                Console.WriteLine();
+            }
+        }
+
+        static void FindStudent()
+        {
+            Console.Write("Введите ID студента: ");
+            if (int.TryParse(Console.ReadLine(), out int id))
+            {
+                var student = _university.FindStudentById(id);
+                if (student != null)
+                {
+                    Console.WriteLine("\n--- Найден студент ---");
+                    Console.WriteLine(student.GetInfo());
+                    Console.WriteLine(student.GetCourseList());
+                }
+                else
+                {
+                    Console.WriteLine("Студент не найден.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Неверный формат ID.");
+            }
+        }
+
+        static void EnrollStudent()
+        {
+            Console.Write("Введите ID студента: ");
+            if (!int.TryParse(Console.ReadLine(), out int studentId))
+            {
+                Console.WriteLine("Неверный формат ID студента.");
+                return;
             }
 
-            Console.WriteLine($"\nОБЩАЯ СТАТИСТИКА:");
-            Console.WriteLine($"Всего слов: {totalWords}");
-            Console.WriteLine($"Всего предложений: {totalSentences}");
-            Console.WriteLine($"Всего гласных: {totalVowels}");
-            Console.WriteLine($"Всего согласных: {totalConsonants}");
-
-            // Статистика по каждому тексту
-            Console.WriteLine("\nДЕТАЛЬНАЯ СТАТИСТИКА:");
-            for (int i = 0; i < allStatistics.Count; i++)
+            Console.Write("Введите ID курса: ");
+            if (!int.TryParse(Console.ReadLine(), out int courseId))
             {
-                allStatistics[i].DisplayStatistics();
-                if (i < allStatistics.Count - 1)
-                {
-                    Console.WriteLine("---");
-                }
+                Console.WriteLine("Неверный формат ID курса.");
+                return;
+            }
+
+            _university.EnrollStudentInCourse(studentId, courseId);
+            Console.WriteLine("Студент записан на курс!");
+        }
+
+        static void ManageProfessors()
+        {
+            // Аналогично ManageStudents()
+            // Реализация управления преподавателями
+        }
+
+        static void ManageCourses()
+        {
+            // Аналогично ManageStudents()
+            // Реализация управления курсами
+        }
+
+        static void DisplayAllInformation()
+        {
+            Console.WriteLine("\n=== ПОЛНАЯ ИНФОРМАЦИЯ ОБ УНИВЕРСИТЕТЕ ===");
+
+            Console.WriteLine("\n--- ПРЕПОДАВАТЕЛИ ---");
+            var professors = _university.GetAllProfessors();
+            foreach (var professor in professors)
+            {
+                Console.WriteLine($"ID: {professor.Id}, {professor.GetInfo()}");
+                Console.WriteLine($"  {professor.GetTeachingCourses()}");
+            }
+
+            Console.WriteLine("\n--- СТУДЕНТЫ ---");
+            var students = _university.GetAllStudents();
+            foreach (var student in students)
+            {
+                Console.WriteLine($"ID: {student.Id}, {student.GetInfo()}");
+            }
+
+            Console.WriteLine("\n--- КУРСЫ ---");
+            var courses = _university.GetAllCourses();
+            foreach (var course in courses)
+            {
+                Console.WriteLine($"ID: {course.CourseId}, {course.GetCourseInfo()}");
             }
         }
     }
 }
-
